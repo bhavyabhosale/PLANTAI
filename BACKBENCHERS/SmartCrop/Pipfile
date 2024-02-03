@@ -1,0 +1,19 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+streamlit = "~=1.30.0"
+pandas = "*"
+numpy = "*"
+seaborn = "*"
+matplotlib = "*"
+plotly = "*"
+scikit-learn = "*"
+joblib = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.12"
