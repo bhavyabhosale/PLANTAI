@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      color: aliceblue;
+      background-image: url('./bg\ leaf.avif'); /* Replace 'path/to/your/image.jpg' with the actual path to your image */
+      background-size: cover; /* Ensures that the background image covers the entire viewport */
+      background-position: center; /* Centers the background image */
+  }
+  
+
+    #container {
+      text-align: center;
+    }
+
+    form {
+      margin-top: 20px;
+    }
+
+    input {
+      color: black;
+      height: 40px;
+      font-size: large;
+    }
+
+    button {
+      background-color: black;
+      color: aliceblue;
+      height: 40px;
+      width: 80px;
+      font-size: large;
+    }
+
+    #img-preview {
+      margin-top: 20px;
+    }
+
+    #show {
+      margin-top: 20px;
+      color: black;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="container">
+    <form>
+      <input type="file" id="choose-file" name="choose-file" accept="image/*" />
+      <button type="button">Check</button>
+    </form>
+    <div id="img-preview"></div>
+    <div id="show"></div>
+  </div>
+
+  <script type="text/javascript">
+    const chooseFile = document.getElementById("choose-file");
+    const imgPreview = document.getElementById("img-preview");
+    chooseFile.addEventListener("change", function () {
+      getImgData();
+    });
+
+    function getImgData() {
+      const files = chooseFile.files[0];
+      if (files) {
+        const fileReader = new FileReader();
+        fileReader.readAsDataURL(files);
+        fileReader.addEventListener("load", function () {
+          imgPreview.style.display = "block";
+          imgPreview.innerHTML = '<img src="' + this.result + '" />';
+        });
+      }
+    }
+
+    document.querySelector("button").onclick = function sendIdentification() {
+      const files = [...document.querySelector("input[type=file]").files];
+      const promises = files.map((file) => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const res = event.target.result;
+            console.log(res);
+            resolve(res);
+          };
+          reader.readAsDataURL(file);
+        });
+      });
+
+      Promise.all(promises).then((base64files) => {
+        console.log(base64files);
+
+        const data = {
+          api_key: "h0lc6FteSHg3PjPZIEX8DHoZsHW3RLfnfyPsMYcK1xOXLNcJCk",
+          images: base64files,
+          modifiers: ["crops_fast", "similar_images"],
+          language: "en",
+          disease_details: [
+            "cause",
+            "common_names",
+            "classification",
+            "description",
+            "treatment",
+            "url",
+          ],
+        };
+
+        fetch("https://api.plant.id/v2/health_assessment", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            document.getElementById("show").innerHTML = ""
+            document
+              .getElementById("show")
+              .appendChild(document.createElement("h1")).innerHTML = `${
+                data.health_assessment.is_healthy ? "Healthy" : `Not Healthy`
+              }`;
+
+            document
+              .getElementById("show")
+              .appendChild(document.createElement("h2")).innerHTML = `${
+                !data.health_assessment.is_healthy
+                  ? `Disease: ${data.health_assessment.diseases[0].disease_details.common_names[0]} `
+                  : ` `
+              }`;
+            document
+              .getElementById("show")
+              .appendChild(document.createElement("h2")).innerHTML = `${
+                !data.health_assessment.is_healthy
+                  ? `Description: ${data.health_assessment.diseases[0].disease_details.description}`
+                  : ` `
+              }`;
+            console.log("Success:", data);
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+          });
+      });
+    };
+  </script>
+</body>
+
+</html>
